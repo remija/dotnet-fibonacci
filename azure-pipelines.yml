@@ -1,51 +1,28 @@
 pool:
-
   vmImage: "Ubuntu 16.04"
 
 steps:
-
   - task: DotNetCoreInstaller@0
-
     displayName: "Use .NET Core sdk 5.0.101"
-
     inputs:
-
       version: 5.0.101
 
   - task: DotNetCoreCLI@2
-
     displayName: "dotnet test"
-
     inputs:
-
       command: test
-
       projects: "**/*tests.csproj"
-
-      arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage/opencover.xml 
-
-
-
-- task: DotNetCoreCLI@2
-
+      arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage/opencover.xml'
+  
+  - task: DotNetCoreCLI@2
     displayName: Publish
-
     inputs:
-
       command: publish
-
       publishWebProjects: True
-
-      arguments: "--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) -f net5.0 /p:AssemblyVersion=1.0.0.0"
-
+      arguments: "--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) -r win-x64 --self-contained=true /p:PublishSingleFile=true /p:IncludeNativeLibrariesInSingleFile=true -f net5.0 /p:AssemblyVersion=1.0.0.0"
       zipAfterPublish: True
 
-
-
   - task: PublishBuildArtifacts@1
-
     displayName: "Publish Artifact: $(Build.DefinitionName)-Artifact"
-
     inputs:
-
       ArtifactName: "$(Build.DefinitionName)-Artifact"
