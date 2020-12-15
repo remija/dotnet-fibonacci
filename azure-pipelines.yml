@@ -1,59 +1,51 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
-trigger:
-- master
-
 pool:
-  vmImage: 'ubuntu-latest'
 
-variables:
-  buildConfiguration: 'Release'
+  vmImage: "Ubuntu 16.04"
 
 steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '3.1.402'
-    includePreviewVersions: true
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'SonarCloud'
-    organization: 'guillaume-chervet-github'
-    scannerMode: 'CLI'
-    configMode: 'manual'
-    cliProjectKey: 'guillaume-chervet_dotnet-fibonacci'
-    cliProjectName: 'dotnet-fibonacci'
-    cliSources: 'src'
-    extraProperties: |
-      sonar.cs.opencover.reportsPaths=**/opencover.xml
-      sonar.branch.name=$(Build.SourceBranchName)
-      sonar.project.monorepo.enabled=true
+
+  - task: DotNetCoreInstaller@0
+
+    displayName: "Use .NET Core sdk 5.0.101"
+
+    inputs:
+
+      version: 5.0.101
+
+  - task: DotNetCoreCLI@2
+
+    displayName: "dotnet test"
+
+    inputs:
+
+      command: test
+
+      projects: "**/*tests.csproj"
+
+      arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage/opencover.xml 
+
+
+
 - task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: 'Fibonacci.sln'
-    arguments: '--configuration $(BuildConfiguration)'
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'test'
-    projects: '**/*Tests.csproj'
-    arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage/opencover.xml'
-    publishTestResults: false
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: '**/Demo.csproj'
-    arguments: '-r win-x64 --self-contained=true --output $(Build.ArtifactStagingDirectory)'
-- task: SonarCloudAnalyze@1
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+
+    displayName: Publish
+
+    inputs:
+
+      command: publish
+
+      publishWebProjects: True
+
+      arguments: "--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) -f net5.0 /p:AssemblyVersion=1.0.0.0"
+
+      zipAfterPublish: True
+
+
+
+  - task: PublishBuildArtifacts@1
+
+    displayName: "Publish Artifact: $(Build.DefinitionName)-Artifact"
+
+    inputs:
+
+      ArtifactName: "$(Build.DefinitionName)-Artifact"
